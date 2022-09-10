@@ -8,7 +8,7 @@ import java.util.*;
  * @author flutterdash@qq.com
  * @since 2022/09/05 - 17:20
  */
-@SuppressWarnings("all")
+@SuppressWarnings("unused")
 public class S652 {
 
     public List<TreeNode> findDuplicateSubtrees(TreeNode root) {
