@@ -5,8 +5,11 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
 import xyz.scootaloo.thinking.leet.ds.TreeNode;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -35,7 +38,7 @@ public class ToolBox {
     }
 
     public static TreeNode tree(Integer... nums) {
-        List<Integer> list = Stream.of(nums).toList();
+        List<Integer> list = Stream.of(nums).collect(Collectors.toList());
         if (list.isEmpty() || list.size() == 1 && list.get(0) == null) {
             return null;
         }
@@ -71,6 +74,11 @@ public class ToolBox {
         }
 
         return root;
+    }
+
+    public static void mock(String input) {
+        InputStream stream = new ByteArrayInputStream(input.getBytes());
+        System.setIn(stream);
     }
 
     public static void measureTimeMillis(Runnable block) {

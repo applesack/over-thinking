@@ -19,7 +19,7 @@ class Template(private val template: String) {
         val buff = StringBuilder(calculateBufferCapacity(params))
         for ((paramStart, paramEnd, paramName) in fillParams) {
             buff.append(template.substring(begin, paramStart))
-            buff.append(params[paramName] ?: "{}")
+            buff.append(params[paramName])
             begin = paramEnd + 1
         }
         buff.append(template.substring(begin))
@@ -67,7 +67,7 @@ class Template(private val template: String) {
                 }
 
                 val name = template.substring(start + 1, idx)
-                if ("\${" in name) {
+                if ('{' in name) {
                     start = -1
                     continue
                 }
