@@ -7,7 +7,7 @@ import java.util.List;
  * @author flutterdash@qq.com
  * @since 2022/08/21 - 20:15
  */
-public class SO85 {
+public class SOffer85 {
 
     public List<String> generateParenthesis(int n) {
         List<String> results = new LinkedList<>();

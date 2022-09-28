@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -38,7 +37,7 @@ public class ToolBox {
     }
 
     public static TreeNode tree(Integer... nums) {
-        List<Integer> list = Stream.of(nums).collect(Collectors.toList());
+        List<Integer> list = Stream.of(nums).toList();
         if (list.isEmpty() || list.size() == 1 && list.get(0) == null) {
             return null;
         }
@@ -74,6 +73,11 @@ public class ToolBox {
         }
 
         return root;
+    }
+
+    @SuppressWarnings("unused")
+    public static boolean stackOverFlow(int deep) {
+        return Thread.currentThread().getStackTrace().length > deep;
     }
 
     public static void mock(String input) {
