@@ -3,6 +3,7 @@ package xyz.scootaloo.thinking.tool;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
+import xyz.scootaloo.thinking.leet.ds.ListNode;
 import xyz.scootaloo.thinking.leet.ds.TreeNode;
 
 import java.io.ByteArrayInputStream;
@@ -16,6 +17,8 @@ import java.util.stream.Stream;
  * @since 2022/09/06 - 20:17
  */
 public class ToolBox {
+
+    public static final String[] EMPTY_ARG = {};
 
     private static final Object lock = new Object();
 
@@ -34,6 +37,16 @@ public class ToolBox {
     public static int[] readIntArray(String file) {
         final String text = read(file);
         return parseIntArray(text);
+    }
+
+    public static ListNode link(Integer... nums) {
+        ListNode head = new ListNode(0);
+        ListNode pointer = head;
+        for (Integer num : nums) {
+            pointer.next = new ListNode(num);
+            pointer = pointer.next;
+        }
+        return head.next;
     }
 
     public static TreeNode tree(Integer... nums) {
