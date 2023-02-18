@@ -1,6 +1,6 @@
 package xyz.scootaloo.thinking.test.luogu;
 
-import xyz.scootaloo.thinking.luogu.P1002;
+import xyz.scootaloo.thinking.draft.luogu.P1002;
 import xyz.scootaloo.thinking.tool.ToolBox;
 
 /**

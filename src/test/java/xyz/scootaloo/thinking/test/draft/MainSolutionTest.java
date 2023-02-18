@@ -1,7 +1,7 @@
 package xyz.scootaloo.thinking.test.draft;
 
 import org.junit.jupiter.api.Test;
-import xyz.scootaloo.thinking.draft.MainSolution;
+import xyz.scootaloo.thinking.draft.onlinetesting.MainSolution;
 
 /**
  * @author flutterdash@qq.com

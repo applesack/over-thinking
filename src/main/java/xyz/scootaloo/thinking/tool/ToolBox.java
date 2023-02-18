@@ -49,6 +49,17 @@ public class ToolBox {
         return head.next;
     }
 
+    public static void printList(ListNode head) {
+        StringBuilder buff = new StringBuilder();
+        while (head != null) {
+            buff.append(head.val);
+            buff.append(" -> ");
+            head = head.next;
+        }
+        buff.append("null");
+        System.out.println(buff);
+    }
+
     public static TreeNode tree(Integer... nums) {
         List<Integer> list = Stream.of(nums).toList();
         if (list.isEmpty() || list.size() == 1 && list.get(0) == null) {

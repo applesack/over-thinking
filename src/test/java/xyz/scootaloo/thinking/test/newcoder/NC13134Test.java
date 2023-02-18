@@ -1,7 +1,7 @@
 package xyz.scootaloo.thinking.test.newcoder;
 
 import org.junit.jupiter.api.Test;
-import xyz.scootaloo.thinking.newcoder.NC13134;
+import xyz.scootaloo.thinking.draft.newcoder.NC13134;
 import xyz.scootaloo.thinking.tool.ToolBox;
 
 /**

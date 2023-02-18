@@ -1,7 +1,7 @@
 package xyz.scootaloo.thinking.test.draft;
 
 import org.junit.jupiter.api.Test;
-import xyz.scootaloo.thinking.draft.Solution;
+import xyz.scootaloo.thinking.draft.onlinetesting.Solution;
 
 import java.util.Arrays;
 import java.util.HashMap;
