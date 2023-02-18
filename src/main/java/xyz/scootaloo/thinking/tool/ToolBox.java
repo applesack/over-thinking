@@ -18,6 +18,8 @@ import java.util.stream.Stream;
  */
 public class ToolBox {
 
+    public static final String[] EMPTY_ARG = {};
+
     private static final Object lock = new Object();
 
     private static volatile Vertx vertx;
@@ -37,7 +39,7 @@ public class ToolBox {
         return parseIntArray(text);
     }
 
-    public static ListNode list(int... nums) {
+    public static ListNode link(int... nums) {
         ListNode vHead = new ListNode(0);
         ListNode p = vHead;
         for (int num : nums) {
@@ -52,17 +54,6 @@ public class ToolBox {
         for (; p != null; p = p.next) {
             buff.append(p.val);
             buff.append(" -> ");
-        }
-        buff.append("null");
-        System.out.println(buff.toString());
-    }
-
-    public static void printList(ListNode head) {
-        StringBuilder buff = new StringBuilder();
-        while (head != null) {
-            buff.append(head.val);
-            buff.append(" -> ");
-            head = head.next;
         }
         buff.append("null");
         System.out.println(buff);
