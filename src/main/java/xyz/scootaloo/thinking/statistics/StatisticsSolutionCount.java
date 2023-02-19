@@ -27,7 +27,7 @@ public class StatisticsSolutionCount {
             println("solution path not a directory");
             return;
         }
-        println(String.format("find %d solution", Objects.requireNonNull(file.list()).length));
+        println(String.format("found %d solution", Objects.requireNonNull(file.list()).length));
     }
 
     private static void println(Object any) {
