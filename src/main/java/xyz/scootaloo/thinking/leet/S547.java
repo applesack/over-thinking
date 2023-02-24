@@ -2,45 +2,38 @@ package xyz.scootaloo.thinking.leet;
 
 /**
  * @author AppleSack
- * @since 2023/02/21
+ * @since 2023/02/22
  */
 public class S547 {
 
     public int findCircleNum(int[][] isConnected) {
-        int R = isConnected.length;
-        int C = isConnected[0].length;
-        boolean[][] visited = new boolean[R][C];
-        int ans = 0;
-        for (int r = 0; r < R; r++) {
-            for (int c = 0; c < C; c++) {
-                if (isConnected[r][c] == 1 && !visited[r][c]) {
-                    ans++;
-                    dfs(R, C, r, c, isConnected, visited);
+        int len = isConnected.length;
+        int[] parent = new int[len];
+        for (int i = 1; i < len; i++) {
+            parent[i] = i;
+        }
+        for (int i = 0; i<len; i++) {
+            for (int j = 0; j<len; j++) {
+                if (isConnected[i][j] == 1) {
+                    union(parent, i, j);
                 }
             }
         }
-        return ans;
-    }
-
-    // 上，右，下，左
-    private final int[][] DIRECTION = new int[][] {
-            { -1, 0 },
-            { 0, 1 },
-            { 1, 0 },
-            { 0, -1 }
-    };
-
-    private void dfs(
-            int R, int C, int r, int c, int[][] grid, boolean[][] visited) {
-        if (r >= R || r < 0 || c < 0 || c >= C || grid[r][c] == 0) {
-            return;
-        }
-        if (!visited[r][c]) {
-            visited[r][c] = true;
-            for (int i = 0; i < 4; i++) {
-                dfs(R, C, r + DIRECTION[i][0], c + DIRECTION[i][1], grid, visited);
+        int count = 0;
+        for (int i = 0; i<len; i++) {
+            if (parent[i] == i) {
+                count++;
             }
         }
+        return count;
+    }
+
+    private void union(int[] parent, int i, int j) {
+        parent[find(parent, i)] = find(parent, j);
+    }
+
+    private int find(int[] parent, int i) {
+        return parent[i] == i ? i : (parent[i] = find(parent,  parent[i]));
     }
 
 }
