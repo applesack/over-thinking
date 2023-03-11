@@ -8,6 +8,7 @@ import xyz.scootaloo.thinking.leet.ds.TreeNode;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -114,6 +115,36 @@ public class ToolBox {
         long end = System.currentTimeMillis();
         String builder = "执行用时: " + ((end - start) / 1000.0) + "秒";
         System.out.println(builder);
+    }
+
+    public static int[][] parse2dIntArray(String text) {
+        List<List<Integer>> container = new LinkedList<>();
+        List<Integer> local = new LinkedList<>();
+        StringBuilder builder = new StringBuilder();
+        int len = text.length();
+        for (int i = 1; i<len; i++) {
+            char ch = text.charAt(i);
+            if (ch == '[') {
+                local.clear();
+            } if (ch >= '0' && ch <= '9') {
+                builder.append(ch);
+            } else if (ch == ',' || ch == ']') {
+                if (builder.length() > 0) {
+                    local.add(Integer.valueOf(builder.toString()));
+                    builder.setLength(0);
+                }
+                if (text.charAt(i - 1) == ']') {
+                    container.add(new ArrayList<>(local));
+                }
+            }
+        }
+
+        int row = container.size();
+        int[][] arr2d = new int[row][];
+        for (int i = 0; i< row; i++) {
+            arr2d[i] = container.get(i).stream().mapToInt(n -> n).toArray();
+        }
+        return arr2d;
     }
 
     private static int[] parseIntArray(String text) {
