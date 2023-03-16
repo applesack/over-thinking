@@ -9,8 +9,10 @@ import xyz.scootaloo.thinking.leet.ds.TreeNode;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -117,16 +119,55 @@ public class ToolBox {
         System.out.println(builder);
     }
 
+    public static char[][] parse2dCharArray(String text) {
+        List<List<String>> lines = parse2dStringList(text);
+        int row = lines.size(), column = lines.get(0).size();
+        char[][] chars = new char[row][column];
+        for (int r = 0; r < row; r++) {
+            for (int c = 0; c < column; c++) {
+                String item = lines.get(r).get(c);
+                chars[r][c] = item.charAt(0);
+            }
+        }
+        return chars;
+    }
+
+    public static List<List<String>> parse2dStringList(String text) {
+        int idx1, idx2;
+        idx2 = text.indexOf('[') + 1;
+        List<List<String>> result = new LinkedList<>();
+        while (true) {
+            idx1 = text.indexOf('[', idx2);
+            if (idx1 < 0) {
+                break;
+            }
+            idx2 = text.indexOf( ']', idx1);
+            if (idx2 < 0) {
+                break;
+            }
+            String sub = text.substring(idx1 + 1, idx2);
+            String[] items = sub.split(",");
+            result.add(Arrays.stream(items)
+                    .map(s -> s.replace('\"', ' '))
+                    .map(s -> s.replace(" ", ""))
+                    .collect(Collectors.toList()));
+        }
+        return result;
+    }
+
     public static int[][] parse2dIntArray(String text) {
         List<List<Integer>> container = new LinkedList<>();
         List<Integer> local = new LinkedList<>();
         StringBuilder builder = new StringBuilder();
         int len = text.length();
-        for (int i = 1; i<len; i++) {
+        int i = 0;
+        while (text.charAt(i) != '[') i++;
+        for (; i < len; i++) {
             char ch = text.charAt(i);
             if (ch == '[') {
                 local.clear();
-            } if (ch >= '0' && ch <= '9') {
+            }
+            if ((ch == '-' || ch == '+') || (ch >= '0' && ch <= '9')) {
                 builder.append(ch);
             } else if (ch == ',' || ch == ']') {
                 if (builder.length() > 0) {
@@ -141,7 +182,7 @@ public class ToolBox {
 
         int row = container.size();
         int[][] arr2d = new int[row][];
-        for (int i = 0; i< row; i++) {
+        for (i = 0; i < row; i++) {
             arr2d[i] = container.get(i).stream().mapToInt(n -> n).toArray();
         }
         return arr2d;
