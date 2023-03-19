@@ -1,7 +1,7 @@
 package xyz.scootaloo.thinking.test.luogu;
 
 import xyz.scootaloo.thinking.draft.luogu.P1002;
-import xyz.scootaloo.thinking.tool.ToolBox;
+import xyz.scootaloo.thinking.utils.ToolBox;
 
 /**
  * @author flutterdash@qq.com

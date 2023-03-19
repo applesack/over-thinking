@@ -1,6 +1,6 @@
 package xyz.scootaloo.thinking.draft.onlinetesting.p360;
 
-import xyz.scootaloo.thinking.tool.ToolBox;
+import xyz.scootaloo.thinking.utils.ToolBox;
 
 /**
  * @author flutterdash@qq.com

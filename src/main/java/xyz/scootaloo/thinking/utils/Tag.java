@@ -1,4 +1,4 @@
-package xyz.scootaloo.thinking.tool;
+package xyz.scootaloo.thinking.utils;
 
 /**
  * @author AppleSack

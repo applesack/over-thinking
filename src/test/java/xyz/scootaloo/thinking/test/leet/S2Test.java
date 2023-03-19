@@ -3,7 +3,7 @@ package xyz.scootaloo.thinking.test.leet;
 import org.junit.jupiter.api.Test;
 import xyz.scootaloo.thinking.leet.S2;
 import xyz.scootaloo.thinking.leet.ds.ListNode;
-import xyz.scootaloo.thinking.tool.ToolBox;
+import xyz.scootaloo.thinking.utils.ToolBox;
 
 /**
  * @author AppleSack

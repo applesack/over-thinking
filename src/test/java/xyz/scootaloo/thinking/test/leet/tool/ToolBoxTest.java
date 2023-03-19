@@ -2,7 +2,7 @@ package xyz.scootaloo.thinking.test.leet.tool;
 
 import org.junit.jupiter.api.Test;
 import xyz.scootaloo.thinking.leet.ds.TreeNode;
-import xyz.scootaloo.thinking.tool.ToolBox;
+import xyz.scootaloo.thinking.utils.ToolBox;
 
 import java.util.Scanner;
 

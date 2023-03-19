@@ -1,6 +1,6 @@
 package xyz.scootaloo.thinking.leet;
 
-import xyz.scootaloo.thinking.tool.Tag;
+import xyz.scootaloo.thinking.utils.Tag;
 
 import java.util.ArrayList;
 import java.util.List;

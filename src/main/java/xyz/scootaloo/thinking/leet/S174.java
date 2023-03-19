@@ -1,6 +1,6 @@
 package xyz.scootaloo.thinking.leet;
 
-import xyz.scootaloo.thinking.tool.Mark;
+import xyz.scootaloo.thinking.utils.Mark;
 
 /**
  * @author AppleSack

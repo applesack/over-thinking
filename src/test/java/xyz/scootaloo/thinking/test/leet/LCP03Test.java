@@ -2,7 +2,6 @@ package xyz.scootaloo.thinking.test.leet;
 
 import org.junit.jupiter.api.Test;
 import xyz.scootaloo.thinking.leet.LCP03;
-import xyz.scootaloo.thinking.tool.ToolBox;
 
 /**
  * @author AppleSack

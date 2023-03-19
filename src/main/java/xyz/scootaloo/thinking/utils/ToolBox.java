@@ -1,4 +1,4 @@
-package xyz.scootaloo.thinking.tool;
+package xyz.scootaloo.thinking.utils;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;

@@ -2,7 +2,7 @@ package xyz.scootaloo.thinking.test.leet;
 
 import org.junit.jupiter.api.Test;
 import xyz.scootaloo.thinking.leet.S828;
-import xyz.scootaloo.thinking.tool.ToolBox;
+import xyz.scootaloo.thinking.utils.ToolBox;
 
 /**
  * @author flutterdash@qq.com
