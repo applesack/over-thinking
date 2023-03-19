@@ -5,7 +5,7 @@ import xyz.scootaloo.thinking.leet.S1143;
 
 /**
  * @author AppleSack
- * @since 2023/03/07
+ * @since 2023/03/06
  */
 public class S1143Test {
 
@@ -14,8 +14,6 @@ public class S1143Test {
     @Test
     public void test() {
         System.out.println(solution.longestCommonSubsequence("abcde", "ace"));
-        System.out.println(solution.longestCommonSubsequence("abc", "abc"));
-        System.out.println(solution.longestCommonSubsequence("abc", "def"));
     }
 
 }
