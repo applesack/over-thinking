@@ -1,4 +1,4 @@
-package xyz.scootaloo.thinking.utils;
+package xyz.scootaloo.thinking.utils.mark;
 
 /**
  * @author AppleSack
@@ -6,6 +6,6 @@ package xyz.scootaloo.thinking.utils;
  */
 public @interface Tag {
 
-    String value() default "";
+    String[] value() default {};
 
 }

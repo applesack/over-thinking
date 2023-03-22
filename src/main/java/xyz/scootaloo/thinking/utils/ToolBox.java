@@ -141,7 +141,7 @@ public class ToolBox {
             if (idx1 < 0) {
                 break;
             }
-            idx2 = text.indexOf( ']', idx1);
+            idx2 = text.indexOf(']', idx1);
             if (idx2 < 0) {
                 break;
             }
@@ -155,8 +155,8 @@ public class ToolBox {
         return result;
     }
 
-    public static int[][] parse2dIntArray(String text) {
-        List<List<Integer>> container = new LinkedList<>();
+    public static List<List<Integer>> parse2dIntegerList(String text) {
+        List<List<Integer>> result = new LinkedList<>();
         List<Integer> local = new LinkedList<>();
         StringBuilder builder = new StringBuilder();
         int len = text.length();
@@ -175,15 +175,19 @@ public class ToolBox {
                     builder.setLength(0);
                 }
                 if (text.charAt(i - 1) == ']') {
-                    container.add(new ArrayList<>(local));
+                    result.add(new ArrayList<>(local));
                 }
             }
         }
+        return result;
+    }
 
-        int row = container.size();
+    public static int[][] parse2dIntArray(String text) {
+        List<List<Integer>> numberMatrix = parse2dIntegerList(text);
+        int row = numberMatrix.size();
         int[][] arr2d = new int[row][];
-        for (i = 0; i < row; i++) {
-            arr2d[i] = container.get(i).stream().mapToInt(n -> n).toArray();
+        for (int i = 0; i < row; i++) {
+            arr2d[i] = numberMatrix.get(i).stream().mapToInt(n -> n).toArray();
         }
         return arr2d;
     }
