@@ -115,7 +115,13 @@ public class ToolBox {
         long start = System.currentTimeMillis();
         block.run();
         long end = System.currentTimeMillis();
-        String builder = "执行用时: " + ((end - start) / 1000.0) + "秒";
+        long interval = end - start;
+        String builder = "执行用时: ";
+        if (interval < 1000) {
+            builder += interval + "毫秒";
+        } else {
+            builder += String.format("%.2f秒", ((float) interval / 1000));
+        }
         System.out.println(builder);
     }
 
