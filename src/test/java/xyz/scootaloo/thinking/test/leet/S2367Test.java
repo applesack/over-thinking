@@ -13,9 +13,7 @@ public class S2367Test {
 
     @Test
     public void test() {
-        int[] nums = { 0, 1, 4, 6, 7, 10 };
-        int diff = 3;
-        assert solution.arithmeticTriplets(nums, diff) == 2;
+        System.out.println(solution.arithmeticTriplets(new int[]{0, 1, 4, 6, 7, 10}, 3)); // 2
     }
 
 }

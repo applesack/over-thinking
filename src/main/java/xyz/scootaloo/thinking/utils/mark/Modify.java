@@ -1,7 +1,5 @@
 package xyz.scootaloo.thinking.utils.mark;
 
-import xyz.scootaloo.thinking.utils.mark.Modifies;
-
 import java.lang.annotation.*;
 
 /**
