@@ -35,6 +35,12 @@ public class S1053Test {
         display(solution.prevPermOpt1(new int[] { 1, 1, 5 })); // 1, 1, 5
         display(solution.prevPermOpt1(new int[] { 1, 9, 4, 6, 7 })); // 1, 7, 4, 6, 9
         display(solution.prevPermOpt1(new int[] { 3, 1, 1, 3 })); // 1, 3, 1, 3
+        //                                                           1  1  3  3
+    }
+
+    @Test
+    public void test3() {
+        display(solution.prevPermOpt1(new int[] { 3, 1, 1, 3 }));
     }
 
     private void display(int[] arr) {
