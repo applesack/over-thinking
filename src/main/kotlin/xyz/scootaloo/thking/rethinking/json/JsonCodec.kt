@@ -256,7 +256,7 @@ private class NullValue(global: GlobalContext) : ConstantValue(global, ValueCons
 
 private class ObjectValue(private val global: GlobalContext) : ValueContainer, ValueSetter {
     private enum class MapperState {
-        EXPECT_KEY, EXPECT_VALUE, EXPECT_COLON, EXPECT_CLOSE
+        EXPECT_KEY, EXPECT_VALUE, EXPECT_COLON, EXPECT_CLOSE, CLOSED
     }
 
     private class Entry(var key: String? = null, var value: Any? = null)
@@ -271,6 +271,7 @@ private class ObjectValue(private val global: GlobalContext) : ValueContainer, V
             MapperState.EXPECT_COLON -> onColon()
             MapperState.EXPECT_VALUE -> onValue()
             MapperState.EXPECT_CLOSE -> onClose()
+            MapperState.CLOSED -> onClosed()
         }
     }
 
@@ -339,6 +340,7 @@ private class ObjectValue(private val global: GlobalContext) : ValueContainer, V
             }
 
             '}'.code -> {
+                state = MapperState.CLOSED
                 collectValue()
                 Helper.reduce(global)
             }
@@ -346,6 +348,12 @@ private class ObjectValue(private val global: GlobalContext) : ValueContainer, V
             else -> {
                 throwParseException(global, "illegal close expression")
             }
+        }
+    }
+
+    private fun onClosed() {
+        if (!global.isWhitespace()) {
+            throwParseException(global, "Illegal symbol after mapping closure")
         }
     }
 
@@ -359,7 +367,7 @@ private class ObjectValue(private val global: GlobalContext) : ValueContainer, V
 
 private class ArrayValue(private val global: GlobalContext) : ValueContainer, ValueSetter {
     private enum class ArrayState {
-        EXPECT_VALUE, EXPECT_CLOSE
+        EXPECT_VALUE, EXPECT_CLOSE, CLOSED
     }
 
     private val array = ArrayList<Any?>()
@@ -378,6 +386,7 @@ private class ArrayValue(private val global: GlobalContext) : ValueContainer, Va
         when (state) {
             ArrayState.EXPECT_VALUE -> onValue()
             ArrayState.EXPECT_CLOSE -> onClose()
+            ArrayState.CLOSED -> onClosed()
         }
     }
 
@@ -420,12 +429,18 @@ private class ArrayValue(private val global: GlobalContext) : ValueContainer, Va
             }
 
             ']'.code -> {
+                state = ArrayState.CLOSED
                 setAndClear()
-                state = ArrayState.EXPECT_CLOSE
                 Helper.reduce(global)
             }
 
             else -> throwParseException(global, "illegal array close symbol")
+        }
+    }
+
+    private fun onClosed() {
+        if (!global.isWhitespace()) {
+            throwParseException(global, "Illegal symbol after array closure")
         }
     }
 }
@@ -433,7 +448,7 @@ private class ArrayValue(private val global: GlobalContext) : ValueContainer, Va
 
 private class StringValue(private val global: GlobalContext) : ValueContainer {
     private enum class StringState {
-        NORMAL, ESCAPE, HEX
+        NORMAL, ESCAPE, HEX, CLOSED
     }
 
     private var state = StringState.NORMAL
@@ -444,12 +459,17 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
         when (state) {
             StringState.ESCAPE -> escape()
             StringState.HEX -> hex()
-            else -> push()
+            StringState.NORMAL -> push()
+            StringState.CLOSED -> {
+                if (!global.isWhitespace()) {
+                    throwParseException(global, "Illegal symbol after string closure")
+                }
+            }
         }
     }
 
     override fun get(): Any {
-        if (state != StringState.NORMAL) {
+        if (state != StringState.CLOSED) {
             throwParseException(global, "close symbol of string not found")
         }
         return builder.toString()
@@ -457,7 +477,7 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
 
     private fun escape() {
         when (global.next) {
-            '\"'.code -> builder.append('"')
+            '"'.code -> builder.append('"')
             '\\'.code -> builder.append('\\')
             '/'.code -> builder.append('/')
             'b'.code -> builder.append('\b')
@@ -467,8 +487,13 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
             't'.code -> builder.append('\t')
             'u'.code -> {
                 state = StringState.HEX
+                return
+            }
+            else -> {
+                throwParseException(global, "illegal escape symbol")
             }
         }
+        state = StringState.NORMAL
     }
 
     private fun hex() {
@@ -483,7 +508,10 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
 
     private fun push() {
         when (val ch = global.next) {
-            '\"'.code -> Helper.reduce(global)
+            '"'.code -> {
+                state = StringState.CLOSED
+                Helper.reduce(global)
+            }
             '\\'.code -> state = StringState.ESCAPE
             else -> builder.append(ch.toChar())
         }
@@ -494,18 +522,26 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
 private class NumberValue(private val global: GlobalContext) : ValueContainer {
 
     private val builder = StringBuilder()
+    private var closed = false
 
     init {
         builder.append(global.next.toChar())
     }
 
     override fun accept() {
+        if (closed) {
+            if (!global.isWhitespace()) {
+                throwParseException(global, "Illegal symbol after number closure")
+            }
+        }
+
         val ch = global.next.toChar()
         if (Character.isDigit(ch) || ch == 'e' || ch == 'E'
             || ch == '.' || ch == '+' || ch == '-'
         ) {
             builder.append(ch)
         } else {
+            closed = true
             global.backspace()
             Helper.reduce(global)
         }

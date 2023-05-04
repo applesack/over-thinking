@@ -1,5 +1,6 @@
 package xyz.scootaloo.thking.rethinking.json
 
+import java.lang.reflect.Field
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.reflect.KClass
@@ -46,7 +47,7 @@ private object StringMapper : JsonMapper {
     }
 
     override fun createJsonFromInstance(instance: Any?): String {
-        JsonCodec.formString()
+        TODO()
     }
 
     override fun toJson(instance: Any?): Any? {
@@ -60,14 +61,14 @@ private object StringMapper : JsonMapper {
 
 
 private class Mapper(private val type: KClass<*>) : JsonMapper {
-    private val subMembers = LinkedHashMap<String, Mapper>()
+    private val subMembers = LinkedHashMap<String, FieldBinding>()
 
     init {
-        TODO()
+        initialize()
     }
 
     override fun iterator(): Iterator<Mapper> {
-        return MIterator(subMembers.values)
+        return MIterator(subMembers.values.map { it.mapper })
     }
 
     override fun createInstanceFromJson(json: Any?): Any? {
@@ -82,8 +83,26 @@ private class Mapper(private val type: KClass<*>) : JsonMapper {
         TODO("Not yet implemented")
     }
 
+    private fun initialize() {
+
+    }
+
     private class MIterator(
         private val mappers: Collection<Mapper>
     ) : Iterator<Mapper> by mappers.iterator()
 }
 
+
+private class FieldBinding(val field: Field, val mapper: Mapper) {
+    init {
+        field.isAccessible = true
+    }
+
+    operator fun set(receiver: Any, value: Any?) {
+        field[receiver] = value
+    }
+
+    operator fun get(receiver: Any): Any? {
+        return field[receiver]
+    }
+}

@@ -17,7 +17,7 @@ public class JsonFormatTest {
                 {
                 "abc": 908,
                 "def"    : null,
-                "xyz": [124, {},[], true , [990]
+                "xyz": [124, {},[[]], true , [990]
                 ]
                 }
                 """, 2));
