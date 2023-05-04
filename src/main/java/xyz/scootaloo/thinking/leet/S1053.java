@@ -1,29 +1,32 @@
 package xyz.scootaloo.thinking.leet;
 
-import xyz.scootaloo.thinking.utils.mark.Mark;
-
 /**
  * @author AppleSack
  * @since 2023/04/03
  */
-@Mark("todo")
 public class S1053 {
 
     public int[] prevPermOpt1(int[] arr) {
-        int len = arr.length, pos = len - 2;
+        int len = arr.length;
+        int min = arr[len - 1];
+        int pos = len - 1;
         while (pos >= 0) {
-            if (arr[pos] >= arr[pos + 1]) {
-                // 在右边找一个小一点的数
-                for (int j = len - 1; j > pos; j--) {
-                    if (arr[j] < arr[pos]) {
-                        int tmp = arr[j];
-                        arr[j] = arr[pos];
-                        arr[pos] = tmp;
-                        return arr;
+            if (arr[pos] <= min) {
+                min = arr[pos];
+            } else {
+                int minPos = len - 1;
+                for (int p = len - 1; p > pos; --p) {
+                    if (arr[p] < arr[pos] && arr[p] >= min) {
+                        min = arr[p];
+                        minPos = p;
                     }
                 }
+                int tmp = arr[minPos];
+                arr[minPos] = arr[pos];
+                arr[pos] = tmp;
+                return arr;
             }
-            pos--;
+            --pos;
         }
         return arr;
     }

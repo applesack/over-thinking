@@ -1,57 +1,35 @@
 package xyz.scootaloo.thinking.leet;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author AppleSack
  * @since 2023/04/04
  */
 public class S1000 {
 
-    private       int                 k;
-    private       int                 len;
-    private       int[]               sum;
-    private final Map<Group, Integer> costMap = new HashMap<>();
-
     public int mergeStones(int[] stones, int k) {
-        this.k = k;
-        len = stones.length;
-        sum = new int[len];
-        sum[0] = stones[0];
-        for (int i = 1; i < len; ++i) {
-            sum[i] = stones[i] + sum[i - 1];
-        }
-        return solve(0, len - 1, k);
-    }
-
-    private int solve(int l, int r, int count) {
-        Group result = new Group(l, r, count);
-        if (costMap.containsKey(result)) {
-            return costMap.get(result);
+        int len = stones.length;
+        if ((len - 1) % (k - 1) > 0) {
+            return -1;
         }
 
-        int cost = Integer.MAX_VALUE;
-        int distance = r - l + 1;
-        if (distance == count) {
-            cost = range(l, r);
-        } else if (distance < count) {
-            cost = -1;
-        } else {
-            // todo
+        var sum = new int[len + 1];
+        for (int i = 0; i < len; i++) {
+            sum[i + 1] = stones[i] + sum[i];
         }
-        costMap.put(result, cost);
-        return cost;
-    }
 
-    private int range(int l, int r) {
-        if (l == 0) {
-            return sum[r];
+        var dp = new int[len][len];
+        for (int i = len - 1; i >= 0; --i) {
+            for (int j = i + 1; j < len; ++j) {
+                dp[i][j] = Integer.MAX_VALUE;
+                for (int m = i; m < j; m += k - 1) {
+                    dp[i][j] = Math.min(dp[i][j], dp[i][m] + dp[m + 1][j]);
+                }
+                if ((j - i) % (k - 1) == 0) {
+                    dp[i][j] += sum[j + 1] - sum[i];
+                }
+            }
         }
-        return sum[r] - sum[l - 1];
-    }
-
-    record Group(int left, int right, int count) {
+        return dp[0][len - 1];
     }
 
 }
