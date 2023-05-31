@@ -226,7 +226,7 @@ private open class ConstantValue(
         }
         pos++
         if (pos == constant.length) {
-            Helper.reduce(global)
+            Helper.framePop(global)
         }
     }
 
@@ -342,7 +342,7 @@ private class ObjectValue(private val global: GlobalContext) : ValueContainer, V
             '}'.code -> {
                 state = MapperState.CLOSED
                 collectValue()
-                Helper.reduce(global)
+                Helper.framePop(global)
             }
 
             else -> {
@@ -431,7 +431,7 @@ private class ArrayValue(private val global: GlobalContext) : ValueContainer, Va
             ']'.code -> {
                 state = ArrayState.CLOSED
                 setAndClear()
-                Helper.reduce(global)
+                Helper.framePop(global)
             }
 
             else -> throwParseException(global, "illegal array close symbol")
@@ -510,7 +510,7 @@ private class StringValue(private val global: GlobalContext) : ValueContainer {
         when (val ch = global.next) {
             '"'.code -> {
                 state = StringState.CLOSED
-                Helper.reduce(global)
+                Helper.framePop(global)
             }
             '\\'.code -> state = StringState.ESCAPE
             else -> builder.append(ch.toChar())
@@ -543,7 +543,7 @@ private class NumberValue(private val global: GlobalContext) : ValueContainer {
         } else {
             closed = true
             global.backspace()
-            Helper.reduce(global)
+            Helper.framePop(global)
         }
     }
 
@@ -558,7 +558,7 @@ private class NumberValue(private val global: GlobalContext) : ValueContainer {
 
 
 private object Helper {
-    fun reduce(global: GlobalContext) {
+    fun framePop(global: GlobalContext) {
         if (global.size() > 1) {
             val curValue = global.pop().value.get()
             val topElement = global.top().value

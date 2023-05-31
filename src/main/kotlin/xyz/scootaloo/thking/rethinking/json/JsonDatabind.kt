@@ -3,6 +3,7 @@ package xyz.scootaloo.thking.rethinking.json
 import java.lang.reflect.Field
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.reflect.KClass
 
 /**
@@ -21,7 +22,7 @@ object JsonDatabind {
     }
 
     private fun registerDefault() {
-        lock.read {
+        lock.write {
 
         }
     }
@@ -50,8 +51,11 @@ private object StringMapper : JsonMapper {
         TODO()
     }
 
-    override fun toJson(instance: Any?): Any? {
-        TODO("Not yet implemented")
+    override fun toJson(instance: Any?): Any {
+        if (instance == null) {
+            return "null"
+        }
+        return "\"$instance\""
     }
 
     override fun iterator(): Iterator<JsonMapper> {
@@ -60,6 +64,7 @@ private object StringMapper : JsonMapper {
 }
 
 
+// object
 private class Mapper(private val type: KClass<*>) : JsonMapper {
     private val subMembers = LinkedHashMap<String, FieldBinding>()
 
