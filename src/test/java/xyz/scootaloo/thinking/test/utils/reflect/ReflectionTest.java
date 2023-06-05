@@ -4,12 +4,17 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * @author AppleSack
  * @since 2023/06/05
  */
 public class ReflectionTest {
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     @Test
     public void testTypeMembers() {
@@ -21,11 +26,33 @@ public class ReflectionTest {
         handle(GenericPojo.class, null);
     }
 
+    @Test
+    public void testGenerateGName() {
+        var classType = Type1.class;
+        tPrintGNameByField(Utils.getFiled(classType, "member0"));
+        tPrintGNameByField(Utils.getFiled(classType, "member1"));
+        tPrintGNameByField(Utils.getFiled(classType, "member2"));
+    }
+
+    private void tPrintGNameByField(Field field) {
+        var fieldType = field.getType();
+        var typeParameter = field.getGenericType();
+        if (typeParameter instanceof ParameterizedType parameterGenericType) {
+            var actualTypeArguments = parameterGenericType.getActualTypeArguments();
+            var qualifiedName = getQualifiedName(fieldType, actualTypeArguments);
+            System.out.println(qualifiedName);
+        }
+    }
+
     private void handle(Class<?> classType, Type[] typeGenericArgs) {
 
     }
 
-    private Mapper mapper(Class<?> classType, Type[] genericTypeParameters) {
+    private Mapper getMapper(Class<?> classType, Type[] genericTypeParameters) {
+        return null;
+    }
+
+    private Mapper getMapperCore(Class<?> classType, Type[] genericTypeParameters) {
         var typeParameters = classType.getTypeParameters();
         assertGenericInfoConsistent(classType, typeParameters, genericTypeParameters);
 
@@ -50,11 +77,32 @@ public class ReflectionTest {
                 continue;
             }
             var arguments = parameterGenericType.getActualTypeArguments();
+            var fieldType = field.getType();
             var fieldName = field.getName();
-
+            var property = new Property(fieldName, field, getMapper(fieldType, arguments));
+            properties.put(fieldName, property);
         }
 
         return new Mapper(classType, genericTypeParameters, properties, nonArgConstructor);
+    }
+
+    private String getQualifiedName(Class<?> classType, Type[] genericTypeParameters) {
+        int gTypeSize = genericTypeParameters == null ? 0 : genericTypeParameters.length;
+        if (gTypeSize == 0) {
+            return classType.getTypeName();
+        }
+        return classType.getTypeName() + genericTypeDescription(genericTypeParameters);
+    }
+
+    private String genericTypeDescription(Type[] genericTypeParameters) {
+        var parameterList = Arrays.stream(genericTypeParameters)
+                .map(this::genericTypeDescription)
+                .collect(Collectors.joining(","));
+        return "<" + parameterList + ">";
+    }
+
+    private String genericTypeDescription(Type genericTypeParameter) {
+        return null;
     }
 
     private void assertGenericInfoConsistent(
@@ -72,8 +120,8 @@ public class ReflectionTest {
             Map<String, Property> properties, Constructor<?> constructor
     ) {
         public Object createInstanceWithArg(Object arg) throws InvocationTargetException,
-                                                               InstantiationException,
-                                                               IllegalAccessException {
+                InstantiationException,
+                IllegalAccessException {
             var instance = constructor.newInstance();
             var arguments = argMap(arg);
             if (arguments.isEmpty()) {
@@ -111,6 +159,18 @@ public class ReflectionTest {
     private record Property(String name, Field field, Mapper mapper) {
     }
 
+    static class Utils {
+        public static Field getFiled(Class<?> classType, String fieldName) {
+            try {
+                var field = classType.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     private static class Type0 {
         private int     member0; // 基础类型
         private Integer member1; // 基本类型，包装类
@@ -123,7 +183,7 @@ public class ReflectionTest {
     private static class Type1 {
         private List<Integer>                  member0; // 集合0，列表
         private ArrayList<Integer>             member1; // 集合1，ArrayList
-        private Map<String, List<List<Float>>> member3; // 集合3，复杂类型
+        private Map<String, List<List<Float>>> member2; // 集合2，复杂类型
     }
 
     // 无成员变量pojo
