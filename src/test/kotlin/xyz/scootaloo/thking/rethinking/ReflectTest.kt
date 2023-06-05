@@ -14,6 +14,11 @@ class ReflectTest {
         analysis(Gen1::class)
     }
 
+    @Test
+    fun test1() {
+
+    }
+
     private fun analysis(klass: KClass<*>) {
         println(klass)
     }
@@ -21,5 +26,4 @@ class ReflectTest {
     private class Gen1(var f1: Set<Set<Set<Pair<Long, String>>>>) {
         private lateinit var f2: List<List<List<Map<String, Long>>>>
     }
-
 }

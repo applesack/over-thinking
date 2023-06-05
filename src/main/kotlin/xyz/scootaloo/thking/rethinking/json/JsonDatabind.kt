@@ -1,10 +1,14 @@
 package xyz.scootaloo.thking.rethinking.json
 
+import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 /**
  * @author AppleSack
@@ -18,7 +22,27 @@ object JsonDatabind {
         registerDefault()
     }
 
-    fun i() {
+    fun toJSONObject(obj: Any?): JsonObject? {
+        return typeMapper(getTypeName(obj)).object2json(obj) as JsonObject?
+    }
+
+    fun toJsonArray(obj: Any?): JsonArray? {
+        TODO()
+    }
+
+    fun toJsonString() {
+
+    }
+
+    private fun typeMapper(typeName: String): JsonMapper {
+        return lock.read { map[typeName] } ?: throw RuntimeException("json mapper of $typeName not found")
+    }
+
+    private fun getTypeName(obj: Any?): String {
+        if (obj == null) {
+            return "null"
+        }
+        return obj::javaClass.name
     }
 
     private fun registerDefault() {
@@ -30,9 +54,8 @@ object JsonDatabind {
 
 
 private interface JsonMapper : Iterable<JsonMapper> {
-    fun createInstanceFromJson(json: Any?): Any?
-    fun createJsonFromInstance(instance: Any?): String
-    fun toJson(instance: Any?): Any?
+    fun json2object(json: Any?): Any?
+    fun object2json(instance: Any?): Any?
 }
 
 
@@ -43,53 +66,102 @@ private object EmptyMapperIterator : Iterator<JsonMapper> {
 
 
 private object StringMapper : JsonMapper {
-    override fun createInstanceFromJson(json: Any?): Any? {
-        return json?.toString()
-    }
+    override fun json2object(json: Any?) = json?.toString()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
 
-    override fun createJsonFromInstance(instance: Any?): String {
-        TODO()
-    }
 
-    override fun toJson(instance: Any?): Any {
-        if (instance == null) {
-            return "null"
-        }
-        return "\"$instance\""
-    }
+private object BooleanMapper : JsonMapper {
+    override fun json2object(json: Any?) = if (json == null) null else json == true
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
 
-    override fun iterator(): Iterator<JsonMapper> {
-        return EmptyMapperIterator
-    }
+
+private object ByteMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toByte()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
+
+
+private object ShortMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toShort()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
+
+
+private object IntMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toInt()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
+
+
+private object FloatMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toFloat()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
+
+
+private object DoubleMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toDouble()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
+}
+
+
+private object LongMapper : JsonMapper {
+    override fun json2object(json: Any?) = (json as Number?)?.toLong()
+    override fun object2json(instance: Any?) = instance
+    override fun iterator() = EmptyMapperIterator
 }
 
 
 // object
 private class Mapper(private val type: KClass<*>) : JsonMapper {
-    private val subMembers = LinkedHashMap<String, FieldBinding>()
+    private val members = LinkedHashMap<String, FieldBinding>()
+    private lateinit var constructor: KFunction<*>
 
     init {
         initialize()
     }
 
     override fun iterator(): Iterator<Mapper> {
-        return MIterator(subMembers.values.map { it.mapper })
+        return MIterator(members.values.map { it.mapper })
     }
 
-    override fun createInstanceFromJson(json: Any?): Any? {
+    override fun json2object(json: Any?): Any? {
         TODO()
     }
 
-    override fun createJsonFromInstance(instance: Any?): String {
+    override fun object2json(instance: Any?): Any? {
         TODO("Not yet implemented")
     }
 
-    override fun toJson(instance: Any?): Any? {
-        TODO("Not yet implemented")
+    private fun instantiate(): Any {
+        TODO()
     }
 
     private fun initialize() {
+        var found = false
+        for (constructor in type.constructors) {
+            if (constructor.parameters.isEmpty()) {
+                constructor.isAccessible = true
+                this.constructor = constructor
+                found = true
+                break
+            }
+        }
+        if (!found) {
+            throw RuntimeException("empty constructor not found")
+        }
 
+        for (property in type.memberProperties) {
+        }
     }
 
     private class MIterator(
