@@ -48,11 +48,11 @@ public class ReflectionTest {
 
     }
 
-    private Mapper getMapper(Class<?> classType, Type[] genericTypeParameters) {
+    private ObjectMapper getMapper(Class<?> classType, Type[] genericTypeParameters) {
         return null;
     }
 
-    private Mapper getMapperCore(Class<?> classType, Type[] genericTypeParameters) {
+    private ObjectMapper getMapperCore(Class<?> classType, Type[] genericTypeParameters) {
         var typeParameters = classType.getTypeParameters();
         assertGenericInfoConsistent(classType, typeParameters, genericTypeParameters);
 
@@ -83,7 +83,8 @@ public class ReflectionTest {
             properties.put(fieldName, property);
         }
 
-        return new Mapper(classType, genericTypeParameters, properties, nonArgConstructor);
+//        return new ObjectMapper(classType, genericTypeParameters, properties, nonArgConstructor);
+        return null;
     }
 
     private String getQualifiedName(Class<?> classType, Type[] genericTypeParameters) {
@@ -102,7 +103,19 @@ public class ReflectionTest {
     }
 
     private String genericTypeDescription(Type genericTypeParameter) {
-        return null;
+        if (genericTypeParameter instanceof ParameterizedType parameterizedType) {
+            // 举例:
+            // 如果是List<String>, rawType=List, actualTypeArguments=[String]
+            // 如果是Map<String,List<String>, actualTypeArguments=[String,List<String>]
+            var rawType = parameterizedType.getRawType();
+            var actualTypeArguments = parameterizedType.getActualTypeArguments();
+            return normalTypeDescription((Class<?>) rawType) + genericTypeDescription(actualTypeArguments);
+        }
+        return normalTypeDescription((Class<?>) genericTypeParameter);
+    }
+
+    private String normalTypeDescription(Class<?> normalType) {
+        return normalType.getTypeName();
     }
 
     private void assertGenericInfoConsistent(
@@ -115,51 +128,135 @@ public class ReflectionTest {
         }
     }
 
-    private record Mapper(
-            Class<?> type, Type[] genericActualArguments,
-            Map<String, Property> properties, Constructor<?> constructor
+    private static class TypeMark {
+        /* 对象类型 */
+        static final int object = 0;
+
+        /* [1,10] 基本类型 */
+        static final int t_bool   = 1;
+        static final int t_byte   = 2;
+        static final int t_short  = 3;
+        static final int t_int    = 4;
+        static final int t_float  = 5;
+        static final int t_double = 6;
+        static final int t_long   = 7;
+        static final int t_string = 8;
+
+        /* [11,20] 包装类型 */
+        static final int w_bool   = 11;
+        static final int w_byte   = 12;
+        static final int w_short  = 13;
+        static final int w_int    = 14;
+        static final int w_float  = 15;
+        static final int w_double = 16;
+        static final int w_long   = 17;
+
+        /* 集合类型 */
+        static final int ls             = 20;
+        static final int ls_array_list  = 21;
+        static final int ls_linked_list = 22;
+
+        static final int que       = 30;
+        static final int que_deque = 31;
+        static final int que_pq    = 32;
+
+        static final int set      = 40;
+        static final int set_hash = 41;
+        static final int set_tree = 42;
+
+        static final int map      = 50;
+        static final int map_hash = 51;
+        static final int map_tree = 52;
+    }
+
+    private @FunctionalInterface interface IConstructor {
+        Object createInstance();
+    }
+
+    private record ObjectMapper(
+            IConstructor constructor, TypeDefinition definition
     ) {
-        public Object createInstanceWithArg(Object arg) throws InvocationTargetException,
-                InstantiationException,
-                IllegalAccessException {
-            var instance = constructor.newInstance();
-            var arguments = argMap(arg);
-            if (arguments.isEmpty()) {
-                return instance;
+    }
+
+    private record Property(String name, Field field, ObjectMapper objectMapper) {
+    }
+
+    private interface TypeDefinition {
+
+        boolean isGeneric();
+
+        Class<?> getType();
+
+        GenericTypeDefinition getGenericType();
+
+        static TypeDefinition resolveTypeDefinition(Class<?> rawType, Type[] actualTypeParameters) {
+            // todo 检查 rawType 是否有泛型参数
+            if (actualTypeParameters == null) {
+                return new NormalTypeDefinition(rawType);
             }
-
-            properties.forEach((fieldName, property) -> {
-                var value = arguments.get(fieldName);
-                if (value == null) {
-                    return;
-                }
-
-
-            });
-            return instance;
+            var actualTypeArguments = new ArrayList<TypeDefinition>(actualTypeParameters.length);
+            for (Type actualTypeParameter : actualTypeParameters) {
+                actualTypeArguments.add(resolveTypeDefinition(actualTypeParameter));
+            }
+            return new GenericTypeDefinition(rawType, actualTypeArguments);
         }
 
-        public boolean setField(Object owner, Property property, Object value) {
+        private static TypeDefinition resolveTypeDefinition(Type actualTypeParameter) {
+            if (actualTypeParameter instanceof ParameterizedType parameterizedType) {
+                var rawType = parameterizedType.getRawType();
+                var actualTypeArguments = parameterizedType.getActualTypeArguments();
+                return resolveTypeDefinition((Class<?>) rawType, actualTypeArguments);
+            }
+            return new NormalTypeDefinition((Class<?>) actualTypeParameter);
+        }
+    }
+
+    private record NormalTypeDefinition(Class<?> rawType) implements TypeDefinition {
+        @Override
+        public boolean isGeneric() {
+            return false;
+        }
+
+        @Override
+        public Class<?> getType() {
+            return rawType;
+        }
+
+        @Override
+        public GenericTypeDefinition getGenericType() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    private record GenericTypeDefinition(
+            Class<?> rawType, List<TypeDefinition> actualTypeArguments
+    ) implements TypeDefinition {
+
+        @Override
+        public boolean isGeneric() {
             return true;
         }
 
-        @SuppressWarnings({ "unchecked" })
-        private Map<String, Object> argMap(Object arg) {
-            if (arg == null) {
-                return Collections.emptyMap();
-            }
-            if (arg instanceof Map<?, ?>) {
-                return (Map<String, Object>) arg;
-            } else {
-                throw new IllegalArgumentException(String.format("%s type must be Map<String, Any>", arg));
-            }
+        @Override
+        public Class<?> getType() {
+            return rawType;
+        }
+
+        @Override
+        public GenericTypeDefinition getGenericType() {
+            return this;
         }
     }
 
-    private record Property(String name, Field field, Mapper mapper) {
-    }
-
     static class Utils {
+        public static Object setField(Field field, Object owner) {
+            try {
+                return field.get(owner);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         public static Field getFiled(Class<?> classType, String fieldName) {
             try {
                 var field = classType.getDeclaredField(fieldName);
