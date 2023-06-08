@@ -34,6 +34,60 @@ public class ReflectionTest {
         tPrintGNameByField(Utils.getFiled(classType, "member2"));
     }
 
+    @Test
+    public void collectionTypeCodeGen() {
+        List<Class<?>> types = new ArrayList<>(20);
+        types.add(boolean.class);
+        types.add(byte.class);
+        types.add(short.class);
+        types.add(int.class);
+        types.add(float.class);
+        types.add(double.class);
+        types.add(long.class);
+        types.add(String.class);
+
+        types.add(Boolean.class);
+        types.add(Byte.class);
+        types.add(Short.class);
+        types.add(Integer.class);
+        types.add(Float.class);
+        types.add(Double.class);
+        types.add(Long.class);
+
+        types.add(List.class);
+        types.add(ArrayList.class);
+        types.add(LinkedList.class);
+
+        types.add(Queue.class);
+        types.add(Deque.class);
+        types.add(PriorityQueue.class);
+
+        types.add(Set.class);
+        types.add(HashSet.class);
+        types.add(TreeSet.class);
+
+        types.add(Map.class);
+        types.add(HashMap.class);
+        types.add(TreeMap.class);
+
+        for (var type : types) {
+            var typeName = type.getTypeName();
+            var prefix = "w_";
+            if (typeName.contains("Set")) {
+                prefix = "set";
+            } else if (typeName.contains("Map")) {
+                prefix = "map";
+            } else if (typeName.contains("List")) {
+                prefix = "ls";
+            } else if (typeName.contains("ue")) {
+                prefix = "que";
+            } else if (typeName.toLowerCase().equals(typeName)) {
+                prefix = "t_";
+            }
+            System.out.println("put(\"" + type.getTypeName() + "\", " + prefix + ");");
+        }
+    }
+
     private void tPrintGNameByField(Field field) {
         var fieldType = field.getType();
         var typeParameter = field.getGenericType();
@@ -45,14 +99,14 @@ public class ReflectionTest {
     }
 
     private void handle(Class<?> classType, Type[] typeGenericArgs) {
-
+        System.out.println(classType);
     }
 
-    private ObjectMapper getMapper(Class<?> classType, Type[] genericTypeParameters) {
+    private InstanceTemplate getMapper(Class<?> classType, Type[] genericTypeParameters) {
         return null;
     }
 
-    private ObjectMapper getMapperCore(Class<?> classType, Type[] genericTypeParameters) {
+    private InstanceTemplate getMapperCore(Class<?> classType, Type[] genericTypeParameters) {
         var typeParameters = classType.getTypeParameters();
         assertGenericInfoConsistent(classType, typeParameters, genericTypeParameters);
 
@@ -88,7 +142,7 @@ public class ReflectionTest {
     }
 
     private String getQualifiedName(Class<?> classType, Type[] genericTypeParameters) {
-        int gTypeSize = genericTypeParameters == null ? 0 : genericTypeParameters.length;
+        var gTypeSize = genericTypeParameters == null ? 0 : genericTypeParameters.length;
         if (gTypeSize == 0) {
             return classType.getTypeName();
         }
@@ -128,7 +182,9 @@ public class ReflectionTest {
         }
     }
 
-    private static class TypeMark {
+    private enum TypeMark {
+        LIST, QUEUE, SET, MAP;
+
         /* 对象类型 */
         static final int object = 0;
 
@@ -151,7 +207,7 @@ public class ReflectionTest {
         static final int w_double = 16;
         static final int w_long   = 17;
 
-        /* 集合类型 */
+        /* [20, inf] 集合类型 */
         static final int ls             = 20;
         static final int ls_array_list  = 21;
         static final int ls_linked_list = 22;
@@ -167,21 +223,97 @@ public class ReflectionTest {
         static final int map      = 50;
         static final int map_hash = 51;
         static final int map_tree = 52;
+
+        private static final Map<String, Integer> markMap = new HashMap<>();
+
+        static {
+            put("boolean", t_bool);
+            put("byte", t_byte);
+            put("short", t_short);
+            put("int", t_int);
+            put("float", t_float);
+            put("double", t_double);
+            put("long", t_long);
+            put("java.lang.String", t_string);
+            put("java.lang.Boolean", w_bool);
+            put("java.lang.Byte", w_byte);
+            put("java.lang.Short", w_short);
+            put("java.lang.Integer", w_int);
+            put("java.lang.Float", w_float);
+            put("java.lang.Double", w_double);
+            put("java.lang.Long", w_long);
+            put("java.util.List", ls);
+            put("java.util.ArrayList", ls_array_list);
+            put("java.util.LinkedList", ls_linked_list);
+            put("java.util.Queue", que);
+            put("java.util.Deque", que_deque);
+            put("java.util.PriorityQueue", que_pq);
+            put("java.util.Set", set);
+            put("java.util.HashSet", set_hash);
+            put("java.util.TreeSet", set_tree);
+            put("java.util.Map", map);
+            put("java.util.HashMap", map_hash);
+            put("java.util.TreeMap", map_tree);
+        }
+
+        public static int resolveTypeMark(Class<?> classType) {
+            var typeName = classType.getTypeName();
+            if (markMap.containsKey(typeName)) {
+                return markMap.get(typeName);
+            }
+            return object;
+        }
+
+        public static boolean isAnyObject(int mark) {
+            return mark == 0;
+        }
+
+        public static boolean isBasicType(int mark) {
+            return mark < 20;
+        }
+
+        public static boolean isWrapperType(int mark) {
+            return mark < 20 && mark > 10;
+        }
+
+        public static TypeMark getType(int mark) {
+            if (mark < 20) {
+                throw new IllegalArgumentException(mark + " is not a collection mark");
+            }
+            if (mark < 30) {
+                return LIST;
+            }
+            if (mark < 40) {
+                return QUEUE;
+            }
+            if (mark < 50) {
+                return SET;
+            }
+            if (mark < 60) {
+                return MAP;
+            }
+            throw new IllegalArgumentException(mark + " is not a collection mark");
+        }
+
+        private static void put(String typeName, int mark) {
+            markMap.put(typeName, mark);
+        }
     }
 
     private @FunctionalInterface interface IConstructor {
-        Object createInstance();
+        Object createInstance(Object... args);
     }
 
-    private record ObjectMapper(
-            IConstructor constructor, TypeDefinition definition
+    private record InstanceTemplate(
+            IConstructor constructor, TypeDefinition definition, Map<String, Property> properties
     ) {
     }
 
-    private record Property(String name, Field field, ObjectMapper objectMapper) {
+    private record Property(String name, Field field, InstanceTemplate instanceTemplate) {
     }
 
     private interface TypeDefinition {
+        int mark();
 
         boolean isGeneric();
 
@@ -190,15 +322,20 @@ public class ReflectionTest {
         GenericTypeDefinition getGenericType();
 
         static TypeDefinition resolveTypeDefinition(Class<?> rawType, Type[] actualTypeParameters) {
-            // todo 检查 rawType 是否有泛型参数
+            checkTypeParameterList(rawType, actualTypeParameters);
             if (actualTypeParameters == null) {
-                return new NormalTypeDefinition(rawType);
+                return new NormalTypeDefinition(rawType, resolveRawTypeMark(rawType));
             }
             var actualTypeArguments = new ArrayList<TypeDefinition>(actualTypeParameters.length);
-            for (Type actualTypeParameter : actualTypeParameters) {
+            for (var actualTypeParameter : actualTypeParameters) {
                 actualTypeArguments.add(resolveTypeDefinition(actualTypeParameter));
             }
-            return new GenericTypeDefinition(rawType, actualTypeArguments);
+            return new GenericTypeDefinition(rawType, actualTypeArguments, resolveRawTypeMark(rawType));
+        }
+
+        private static void checkTypeParameterList(Class<?> rawType, Type[] actualTypeParameters) {
+            var atpSize = actualTypeParameters == null ? 0 : actualTypeParameters.length;
+            assert rawType.getTypeParameters().length == atpSize;
         }
 
         private static TypeDefinition resolveTypeDefinition(Type actualTypeParameter) {
@@ -207,11 +344,16 @@ public class ReflectionTest {
                 var actualTypeArguments = parameterizedType.getActualTypeArguments();
                 return resolveTypeDefinition((Class<?>) rawType, actualTypeArguments);
             }
-            return new NormalTypeDefinition((Class<?>) actualTypeParameter);
+            var classRawType = (Class<?>) actualTypeParameter;
+            return new NormalTypeDefinition(classRawType, resolveRawTypeMark(classRawType));
+        }
+
+        private static int resolveRawTypeMark(Class<?> rawType) {
+            return TypeMark.resolveTypeMark(rawType);
         }
     }
 
-    private record NormalTypeDefinition(Class<?> rawType) implements TypeDefinition {
+    private record NormalTypeDefinition(Class<?> rawType, int mark) implements TypeDefinition {
         @Override
         public boolean isGeneric() {
             return false;
@@ -229,7 +371,7 @@ public class ReflectionTest {
     }
 
     private record GenericTypeDefinition(
-            Class<?> rawType, List<TypeDefinition> actualTypeArguments
+            Class<?> rawType, List<TypeDefinition> actualTypeArguments, int mark
     ) implements TypeDefinition {
 
         @Override
