@@ -1,24 +1,28 @@
 package xyz.scootaloo.thinking.rethinking.reflect;
 
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * @author AppleSack
- * @since 2023/06/09
+ * @since 2023/06/10
  */
-public record GenericTypeDefinition(
-        Class<?> rawType, List<TypeDefinition> actualTyeArguments, int mark
+public record ArrayTypeDefinition(
+        TypeDefinition definition
 ) implements TypeDefinition {
 
     @Override
+    public int mark() {
+        return 0;
+    }
+
+    @Override
     public boolean isGeneric() {
-        return true;
+        return false;
     }
 
     @Override
     public boolean isArray() {
-        return false;
+        return true;
     }
 
     @Override
@@ -33,12 +37,12 @@ public record GenericTypeDefinition(
 
     @Override
     public Class<?> getRawType() {
-        return rawType;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public GenericTypeDefinition getGenericType() {
-        return this;
+        throw new UnsupportedOperationException();
     }
 
     @Override

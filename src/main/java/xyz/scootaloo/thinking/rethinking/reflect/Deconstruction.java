@@ -1,25 +1,27 @@
 package xyz.scootaloo.thinking.rethinking.reflect;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import xyz.scootaloo.thinking.rethinking.reflect.TypeDefinition.Property;
+
+import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * @author AppleSack
  * @since 2023/06/09
  */
-public class Reflection {
+public class Deconstruction {
 
-    public static TypeDefinition deconstruction(Class<?> classType) {
+    public static TypeDefinition deconstruct(Class<?> classType) {
         return resolveTypeDefinition(classType, null);
     }
 
-    static TypeDefinition resolveTypeDefinition(Class<?> rawType, Type[] actualTypeParameters) {
+    private static TypeDefinition resolveTypeDefinition(Class<?> rawType, Type[] actualTypeParameters) {
+        if (ArrayUtils.isArray(rawType)) {
+            return resolveArrayTypeDefinition(rawType, actualTypeParameters);
+        }
         checkTypeParameterList(rawType, actualTypeParameters);
         if (actualTypeParameters == null) {
-            return new NormalTypeDefinition(rawType, resolveRawTypeMark(rawType));
+            return normalTypeDefinition(rawType);
         }
         var actualTypeArguments = new ArrayList<TypeDefinition>(actualTypeParameters.length);
         for (var actualTypeParameter : actualTypeParameters) {
@@ -28,9 +30,10 @@ public class Reflection {
         return new GenericTypeDefinition(rawType, actualTypeArguments, resolveRawTypeMark(rawType));
     }
 
-    private static void checkTypeParameterList(Class<?> rawType, Type[] actualTypeParameters) {
-        var atpSize = actualTypeParameters == null ? 0 : actualTypeParameters.length;
-        assert rawType.getTypeParameters().length == atpSize;
+    private static TypeDefinition resolveArrayTypeDefinition(Class<?> arrayType, Type[] actualTypeParameters) {
+        // 如果被解析类型为 List<String>[], 那么泛型参数应该是String, 且rawType是List
+        checkTypeParameterList(arrayType, actualTypeParameters);
+        return null;
     }
 
     private static TypeDefinition resolveTypeDefinition(Type actualTypeParameter) {
@@ -39,18 +42,95 @@ public class Reflection {
             var actualTypeArguments = parameterizedType.getActualTypeArguments();
             return resolveTypeDefinition((Class<?>) rawType, actualTypeArguments);
         }
-        var classRawType = (Class<?>) actualTypeParameter;
-        return new NormalTypeDefinition(classRawType, resolveRawTypeMark(classRawType));
+        return normalTypeDefinition((Class<?>) actualTypeParameter);
+    }
+
+    private static Type[] getFieldGenericArrayType(Field field) {
+        // List<String>[]
+        var genericType = field.getGenericType();
+        if (genericType instanceof GenericArrayType genericArrayType) {
+            var genericComponentType = genericArrayType.getGenericComponentType();
+            if (genericComponentType instanceof ParameterizedType parameterizedType) {
+                return parameterizedType.getActualTypeArguments();
+            }
+        }
+        return null;
+    }
+
+    private static NormalTypeDefinition normalTypeDefinition(Class<?> rawType) {
+        var constructor = findNonArgConstructor(rawType);
+        var typeMark = resolveRawTypeMark(rawType);
+        var properties = findProperties(rawType);
+        return new NormalTypeDefinition(rawType, constructor::newInstance, properties, typeMark);
+    }
+
+    private static Constructor<?> findNonArgConstructor(Class<?> rawType) {
+        for (var constructor : rawType.getConstructors()) {
+            if (constructor.getParameterCount() == 0) {
+                constructor.setAccessible(true);
+                return constructor;
+            }
+        }
+        throw new IllegalStateException("non arg constructor not found");
+    }
+
+    private static List<Property> findProperties(Class<?> classType) {
+        var declaredFields = classType.getDeclaredFields();
+        if (declaredFields.length == 0) {
+            return Property.EMPTY_PROPERTIES;
+        }
+        var properties = new ArrayList<Property>(declaredFields.length);
+        for (var field : declaredFields) {
+            field.setAccessible(true);
+            var fName = field.getName();
+            var fType = field.getType();
+            if (ArrayUtils.isArray(fType)) {
+                var fieldGenericArrayType = getFieldGenericArrayType(field);
+                if (fieldGenericArrayType == null) {
+                    // 非泛型数组f
+                } else {
+                    // 泛型数组
+                }
+            } else {
+
+            }
+        }
+        return null;
+    }
+
+    private static void checkTypeParameterList(Class<?> rawType, Type[] actualTypeParameters) {
+        var atpSize = actualTypeParameters == null ? 0 : actualTypeParameters.length;
+        assert rawType.getTypeParameters().length == atpSize;
     }
 
     private static int resolveRawTypeMark(Class<?> rawType) {
         return TypeMark.resolveTypeMark(rawType);
     }
 
-    private record NormalTypeDefinition(Class<?> rawType, int mark) implements TypeDefinition {
+    private Deconstruction() {
+    }
+
+    public record NormalTypeDefinition(
+            Class<?> rawType, TypeDefinition.Factory constructor, List<Property> properties, int mark
+    ) implements TypeDefinition {
         @Override
         public boolean isGeneric() {
             return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
+        }
+
+        @Override
+        public boolean hasProperties() {
+            return properties != Property.EMPTY_PROPERTIES;
+        }
+
+        @Override
+        public Iterator<Property> getProperties() {
+            return properties.iterator();
         }
 
         @Override
@@ -61,6 +141,26 @@ public class Reflection {
         @Override
         public GenericTypeDefinition getGenericType() {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object newInstance() {
+            return TypeDefinition.safeNewInstance(constructor);
+        }
+    }
+
+    public record FieldProperty(String name, Field field, TypeDefinition definition) implements Property {
+        @Override
+        public void set(Object owner, Object value) {
+            TypeDefinition.unsafeNewInstance(() -> {
+                field.set(owner, value);
+                return null;
+            });
+        }
+
+        @Override
+        public Object get(Object owner) {
+            return TypeDefinition.unsafeNewInstance(() -> field.get(owner));
         }
     }
 
@@ -175,6 +275,19 @@ public class Reflection {
 
         private static void put(String typeName, int mark) {
             markMap.put(typeName, mark);
+        }
+    }
+
+    public static class ArrayUtils {
+        private ArrayUtils() {
+        }
+
+        public static boolean isArray(Class<?> classType) {
+            return classType.isArray();
+        }
+
+        public static Object newArray(Class<?> componentType, int length) {
+            return Array.newInstance(componentType, length);
         }
     }
 }
