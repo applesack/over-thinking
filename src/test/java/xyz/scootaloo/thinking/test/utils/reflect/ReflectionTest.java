@@ -38,6 +38,14 @@ public class ReflectionTest {
     }
 
     @Test
+    public void testGenericObject() {
+        var gen = new GenericPojo<HashSet<String>>();
+        gen.value = new HashSet<>();
+        var klass = gen.getClass();
+        System.out.println(klass);
+    }
+
+    @Test
     public void testGenerateArray() {
         var arr = Array.newInstance(String.class, 10);
         System.out.println(arr);
@@ -189,5 +197,6 @@ public class ReflectionTest {
 
     private static class GenericPojo<T> {
         private T value;
+        private List<T> list;
     }
 }

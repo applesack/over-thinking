@@ -33,7 +33,8 @@ public class Deconstruction {
     private static TypeDefinition resolveArrayTypeDefinition(Class<?> arrayType, Type[] actualTypeParameters) {
         // 如果被解析类型为 List<String>[], 那么泛型参数应该是String, 且rawType是List
         checkTypeParameterList(arrayType, actualTypeParameters);
-        return null;
+        var componentType = resolveTypeDefinition(arrayType, actualTypeParameters);
+        return new ArrayTypeDefinition(componentType);
     }
 
     private static TypeDefinition resolveTypeDefinition(Type actualTypeParameter) {
@@ -54,6 +55,7 @@ public class Deconstruction {
                 return parameterizedType.getActualTypeArguments();
             }
         }
+        // Class<?>
         return null;
     }
 
@@ -85,17 +87,22 @@ public class Deconstruction {
             var fName = field.getName();
             var fType = field.getType();
             if (ArrayUtils.isArray(fType)) {
+                var componentType = fType.getComponentType();
                 var fieldGenericArrayType = getFieldGenericArrayType(field);
-                if (fieldGenericArrayType == null) {
-                    // 非泛型数组f
-                } else {
-                    // 泛型数组
-                }
+                var fieldTypeDefinition = resolveTypeDefinition(componentType, fieldGenericArrayType);
+                var arrayDefWrapper = new ArrayTypeDefinition(fieldTypeDefinition);
+                properties.add(newProperty(fName, field, arrayDefWrapper));
             } else {
-
+                var fieldGenericType = field.getGenericType();
+                var fieldDefinition = resolveTypeDefinition(fieldGenericType);
+                properties.add(newProperty(fName, field, fieldDefinition));
             }
         }
-        return null;
+        return properties;
+    }
+
+    private static Property newProperty(String fieldName, Field field, TypeDefinition definition) {
+        return new FieldProperty(fieldName, field, definition);
     }
 
     private static void checkTypeParameterList(Class<?> rawType, Type[] actualTypeParameters) {
@@ -146,6 +153,91 @@ public class Deconstruction {
         @Override
         public Object newInstance() {
             return TypeDefinition.safeNewInstance(constructor);
+        }
+    }
+
+    public record ArrayTypeDefinition(
+            TypeDefinition definition
+    ) implements TypeDefinition {
+
+        @Override
+        public int mark() {
+            return 0;
+        }
+
+        @Override
+        public boolean isGeneric() {
+            return false;
+        }
+
+        @Override
+        public boolean isArray() {
+            return true;
+        }
+
+        @Override
+        public boolean hasProperties() {
+            return false;
+        }
+
+        @Override
+        public Iterator<Property> getProperties() {
+            return null;
+        }
+
+        @Override
+        public Class<?> getRawType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public GenericTypeDefinition getGenericType() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object newInstance() {
+            return null;
+        }
+    }
+
+    public record GenericTypeDefinition(
+            Class<?> rawType, List<TypeDefinition> actualTyeArguments, int mark
+    ) implements TypeDefinition {
+
+        @Override
+        public boolean isGeneric() {
+            return true;
+        }
+
+        @Override
+        public boolean isArray() {
+            return false;
+        }
+
+        @Override
+        public boolean hasProperties() {
+            return false;
+        }
+
+        @Override
+        public Iterator<Property> getProperties() {
+            return null;
+        }
+
+        @Override
+        public Class<?> getRawType() {
+            return rawType;
+        }
+
+        @Override
+        public GenericTypeDefinition getGenericType() {
+            return this;
+        }
+
+        @Override
+        public Object newInstance() {
+            return null;
         }
     }
 

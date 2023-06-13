@@ -1,14 +1,21 @@
 package xyz.scootaloo.thinking.rethinking.reflect;
 
+import xyz.scootaloo.thinking.rethinking.reflect.Deconstruction.GenericTypeDefinition;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import static xyz.scootaloo.thinking.rethinking.reflect.Deconstruction.*;
 
 /**
  * @author AppleSack
  * @since 2023/06/09
  */
-public interface TypeDefinition {
+public sealed interface TypeDefinition
+        permits ArrayTypeDefinition,
+                GenericTypeDefinition,
+                NormalTypeDefinition {
 
     int mark();
 
