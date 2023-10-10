@@ -1,6 +1,5 @@
 package xyz.scootaloo.thinking.rethinking.eventloop;
 
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
@@ -29,7 +28,10 @@ public final class EventLoop {
     }
 
     public void run() {
-        while (!(events.isEmpty() || Thread.interrupted())) {
+        while (!(events.isEmpty() && Thread.interrupted())) {
+            if (events.isEmpty()) {
+                continue;
+            }
             Event event = events.pop();
             if (handlers.containsKey(event.key)) {
                 handlers.get(event.key).accept(event.data);
